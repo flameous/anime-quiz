@@ -23,7 +23,9 @@ func NewServer() *Server {
 
 func (s *Server) Start(addr string) error {
 
-	// todo: serve static files by nginx
+	// In production this URL serve by NGINX
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "static/index.html")
 	})
@@ -84,7 +86,6 @@ func (s *Server) handleWS() http.Handler {
 				log.Println(err)
 			}
 		}
-
 
 		for {
 			var um quiz.UserMessage
