@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Room</title>
+    <script>
+        let ws;
+
+        function setNicknameAndStart() {
+
+            var nickname = document.getElementById("nickname").value;
+            if (nickname.length === 0) {
+                alert("nickname is invalid, so are you!");
+                return;
+
+            }
+            createWSConnection(nickname);
+            document.getElementById("nickname-box").style.display = "none";
+
+        }
+
+        function createWSConnection(nickname) {
+            ws = new WebSocket("ws://localhost:8080/ws");
+
+            ws.onopen = function (event) {
+
+                let p = window.location.pathname.split("/");
+                ws.send(JSON.stringify({
+                    room_id: p[2],
+                    message: nickname,
+                    message_type: "userHandShake"
+                }));
+            };
+
+            ws.onmessage = function (event) {
+                var data = JSON.parse(event.data);
+                console.log(data);
+
+                switch (data.message_type) {
+                    case "serverNotify":
+                        // user is admin
+                        // show button
+                        document.getElementById("adminButton").style.display = "inline";
+                        break;
+
+                    case "serverSendVideo":
+                        loadVideo(data.message);
+                        break;
+
+                    case "serverStartPlaying":
+                        onServerReady();
+                        // open user input field
+                        break;
+
+                    case "serverAnswer":
+                        onServerAnswer(data.message);
+                        break;
+
+                    case "serverGameOver":
+                        onServerGameOver(data.message);
+                        break;
+                }
+            };
+
+            ws.onclose = function (event) {
+                alert("closed!");
+            };
+        }
+
+        function adminStartGame() {
+            document.getElementById("adminButton").style.display = "none";
+            ws.send(JSON.stringify({
+                message: "startGame",
+                message_type: "userNotify"
+            }));
+        }
+
+        function notifyUserIsReady() {
+            // video is loaded
+            ws.send(JSON.stringify({
+                message_type: "userNotify"
+            }));
+        }
+
+        function sendAnswer() {
+            answer = document.getElementById("userAnswer").value;
+            ws.send(JSON.stringify({
+                message_type: "userAnswer",
+                message: answer,
+            }));
+            document.getElementById("user-input-box").style.display = "none";
+            document.getElementById("userAnswer").value = "";
+        }
+
+        function onServerAnswer(msg) {
+            document.getElementById("user-input-box").style.display = "none";
+            document.getElementById("userAnswer").value = "";
+            document.getElementById("anime-title").innerText = msg;
+        }
+
+        function onServerGameOver(msg) {
+            player.stopVideo();
+            leaderBoardMap = JSON.parse(msg);
+
+            text = "";
+            for (k in leaderBoardMap) {
+                row = k + " : " + leaderBoardMap[k] + "\n";
+                text += row;
+            }
+            document.getElementById("leader-board").innerText = text;
+        }
+
+    </script>
+
+    <script>
+        function loadPlayer() {
+            var tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            var firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        }
+
+        loadPlayer();
+
+        var player;
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '200',
+                width: '200',
+                playerVars: {
+                    'autoplay': 0,
+                    'controls': 0,
+                    'disablekb': 0,
+                    'fs': 0,
+                    'iv_load_policy': 3,
+                    'loop': 0,
+                    'rel': 0,
+                    'showinfo': 0,
+                },
+                events: {
+                    'onReady': onPlayerReady
+                }
+            });
+        }
+
+        function onPlayerReady() {
+        }
+
+        function loadVideo(videoId) {
+            player.loadVideoById(videoId, 0, "small");
+            player.mute();
+            setTimeout(onBuffered, 5000);
+            document.getElementById("anime-title").innerText = "Guess the anime!";
+        }
+
+        function onBuffered() {
+            player.pauseVideo();
+            player.seekTo(0);
+            player.unMute();
+            player.setVolume(10);
+
+            notifyUserIsReady();
+        }
+
+        function onServerReady() {
+            player.playVideo();
+            document.getElementById("user-input-box").style.display = "inline";
+        }
+    </script>
+</head>
+<body>
+<div id="nickname-box">
+    <p>Введи никнейм:</p>
+    <input type="text" id="nickname">
+    <br>
+    <button onclick="setNicknameAndStart()">Ок</button>
+</div>
+<br>
+<button onclick="adminStartGame()" style="display:none" id="adminButton">Начать игру</button>
+<div id="anime-title">Guess the anime!</div>
+<div id="user-input-box" style="display:none">
+    <input type="text" id="userAnswer">
+    <br>
+    <button onclick="sendAnswer()">Отправить ответ</button>
+</div>
+
+<div id="player" style="display:none"></div>
+
+<pre id="leader-board"></pre>
+</body>
+</html>

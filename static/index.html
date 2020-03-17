@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Index</title>
+
+    <script>
+        function randomStr(len) {
+            var ans = "";
+            var arr = "qwertyuiopasdfghjklzxcvbnm1234567890";
+            for (var i = len; i > 0; i--) {
+                var nextElement = arr[Math.floor(Math.random() * arr.length)];
+                console.log(nextElement);
+                ans += nextElement;
+            }
+            return ans;
+        }
+
+        function buttonClick() {
+            quizID = randomStr(6).trim(); // todo: generate quiz id on server
+            url = window.location.protocol + "//" + window.location.host + "/quiz/" + quizID;
+            window.location.replace(url);
+        }
+    </script>
+</head>
+<body>
+Start quiz!
+<br>
+<button onclick="buttonClick()">
+    Create new Anime Opening quiz!
+</button>
+
+</body>
+</html>
