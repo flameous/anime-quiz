@@ -1,7 +1,6 @@
 package quiz
 
 import (
-	"encoding/json"
 	"errors"
 	"sync"
 )
@@ -91,17 +90,13 @@ func (umap *usersMap) SendResultsForEachUser() error {
 	for _, u := range umap.container {
 		usersScore[u.id] = u.score
 	}
-	b, err := json.Marshal(usersScore)
-	if err != nil {
-		return err
-	}
 
 	msg := serverMessage{
 		MessageType: serverMessageTypeGameOver,
-		Message:     string(b),
+		Message:     usersScore,
 	}
 	for _, u := range umap.container {
-		err = u.sendMessageToUser(msg)
+		err := u.sendMessageToUser(msg)
 		if err != nil {
 			anyErr = err
 		}

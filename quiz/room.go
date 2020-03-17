@@ -1,7 +1,6 @@
 package quiz
 
 import (
-	"encoding/json"
 	"errors"
 	"log"
 	"time"
@@ -143,19 +142,12 @@ func (r *Room) SendEnterNotifyToAll(userID string) error {
 	r.users.mu.RLock()
 	defer r.users.mu.RUnlock()
 
-	message := map[string]interface{}{
-		"count":   len(r.users.container),
-		"user_id": userID,
-	}
-
-	b, err := json.Marshal(message)
-	if err != nil {
-		return err
-	}
-
 	msg := serverMessage{
 		MessageType: serverMessageTypeEnterNotify,
-		Message:     string(b),
+		Message: map[string]interface{}{
+			"count":   len(r.users.container),
+			"user_id": userID,
+		},
 	}
 
 	return r.users.sendMessageForEachUser(msg)
@@ -168,19 +160,12 @@ func (r *Room) sendCurrentVideoToAllUsers() error {
 
 	currentQuiz := r.allQuizzes[r.currentQuizID]
 
-	message := map[string]interface{}{
-		"video_id": currentQuiz.videoSource,
-		"start":    currentQuiz.start,
-	}
-
-	b, err := json.Marshal(message)
-	if err != nil {
-		return err
-	}
-
 	msg := serverMessage{
 		MessageType: serverMessageTypeSendVideo,
-		Message:     string(b),
+		Message: map[string]interface{}{
+			"video_id": currentQuiz.videoSource,
+			"start":    currentQuiz.start,
+		},
 	}
 
 	r.users.setUsersToBuffered()

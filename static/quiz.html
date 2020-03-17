@@ -49,7 +49,6 @@
         }
 
         function onEnterNotify(data) {
-            data = JSON.parse(data);
             document.getElementById("content-header-counter").innerText = "(в игре: " + data["count"] + ")";
 
             let message = document.createElement("div");
@@ -73,8 +72,6 @@
 
         function onSendVideo(data) {
             document.getElementById("content-quiz-status").innerText = "Загружаем звук";
-
-            data = JSON.parse(data);
 
             player.loadVideo(data["video_id"], data["start"], () => {
                 ws.sendUserNotify("")
@@ -108,11 +105,9 @@
             document.getElementById("content-quiz-form").style.display = "none";
         }
 
-        function onGameOver(data) {
+        function onGameOver(leaderboard) {
             document.getElementById("content-quiz").style.display = "none";
             player.stopVideo();
-
-            let leaderboard = JSON.parse(data);
 
             for (let user_id in leaderboard) {
                 let li = document.createElement("li");

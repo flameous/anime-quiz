@@ -1,9 +1,9 @@
 package quiz
 
 type serverMessage struct {
-	ID          string `json:"id,omitempty"` // for debug
-	MessageType string `json:"message_type"`
-	Message     string `json:"message"`
+	ID          string      `json:"id,omitempty"` // for debug
+	MessageType string      `json:"message_type"`
+	Message     interface{} `json:"message"`
 }
 
 type UserMessage struct {
