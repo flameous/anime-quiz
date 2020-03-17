@@ -18,7 +18,8 @@ const (
 	UserMessageTypeNotify    = "userNotify"
 	UserMessageTypeAnswer    = "userAnswer"
 
-	serverMessageTypeNotify       = "serverNotify"
+	serverMessageTypeAdminNotify  = "serverAdminNotify"
+	serverMessageTypeEnterNotify  = "serverEnterNotify"
 	serverMessageTypeSendVideo    = "serverSendVideo"
 	serverMessageTypeStartPlaying = "serverStartPlaying"
 	serverMessageTypeAnswer       = "serverAnswer"

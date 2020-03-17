@@ -1,6 +1,7 @@
 package quiz
 
 import (
+	"encoding/json"
 	"errors"
 	"log"
 	"time"
@@ -132,10 +133,32 @@ func (r *Room) handleFinishedRoom(u *User, msg UserMessage) {
 
 func (r *Room) SendAdminNotify(userID string) error {
 	msg := serverMessage{
-		MessageType: serverMessageTypeNotify,
+		MessageType: serverMessageTypeAdminNotify,
 		Message:     "ti glavnuy!",
 	}
 	return r.users.sendMessageToUser(userID, msg)
+}
+
+func (r *Room) SendEnterNotifyToAll(userID string) error {
+	r.users.mu.RLock()
+	defer r.users.mu.RUnlock()
+
+	message := map[string]interface{}{
+		"count":   len(r.users.container),
+		"user_id": userID,
+	}
+
+	b, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+
+	msg := serverMessage{
+		MessageType: serverMessageTypeEnterNotify,
+		Message:     string(b),
+	}
+
+	return r.users.sendMessageForEachUser(msg)
 }
 
 func (r *Room) sendCurrentVideoToAllUsers() error {

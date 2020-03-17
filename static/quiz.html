@@ -45,8 +45,17 @@
             document.getElementById("content-quiz").style.display = "block";
         }
 
-        function onEnterNotify() {
+        function onEnterNotify(data) {
+            data = JSON.parse(data);
+            document.getElementById("content-header-counter").innerText = "(в игре: " + data["count"] + ")";
 
+            let message = document.createElement("div");
+            message.innerText = data["user_id"] + " подключился";
+
+            document.getElementById("messages").appendChild(message);
+            setTimeout(() => {
+                message.remove();
+            }, 30 * 1000);
         }
 
         function onAdminNotify() {
@@ -113,7 +122,7 @@
 
 <div class="container">
     <div class="content">
-        <div class="content-head">Угадай аниме</div>
+        <div class="content-head">Угадай аниме <span id="content-header-counter"></span></div>
 
         <div id="content-loader">Подготавливаем браузер</div>
         <form id="content-join-form" style="display: none">
@@ -137,6 +146,10 @@
             <ul id="content-leaderboard-list"></ul>
         </div>
     </div>
+</div>
+
+<div id="messages">
+
 </div>
 
 <div id="player" style="display: none"></div>

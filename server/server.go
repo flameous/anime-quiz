@@ -73,6 +73,7 @@ func (s *Server) handleWS() http.Handler {
 				// todo: respond to user
 				return
 			}
+
 			// add user to the room (sic!)
 			room.AddUser(u)
 		} else {
@@ -85,6 +86,11 @@ func (s *Server) handleWS() http.Handler {
 			if err != nil {
 				log.Println(err)
 			}
+		}
+
+		err = room.SendEnterNotifyToAll(userID)
+		if err != nil {
+			log.Printf("server: ws: can't notify all users %v", err)
 		}
 
 		for {
