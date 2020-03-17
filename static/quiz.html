@@ -27,6 +27,9 @@
         document.getElementById("content-join-form").onsubmit = joinGame;
         document.getElementById("start-button").onclick = startGame;
         document.getElementById("content-quiz-form").onsubmit = sendAnswer;
+        document.getElementById("content-header-volume").oninput = function () {
+            player.setVolume(parseInt(this.value));
+        };
 
         function joinGame(event) {
             event.preventDefault();
@@ -124,7 +127,10 @@
 
 <div class="container">
     <div class="content">
-        <div class="content-head">Угадай аниме <span id="content-header-counter"></span></div>
+        <div class="content-head">
+            Угадай аниме <span id="content-header-counter"></span>
+            <input type="range" id="content-header-volume" value="100" min="0" max="100">
+        </div>
 
         <div id="content-loader">Подготавливаем браузер</div>
         <form id="content-join-form" style="display: none">

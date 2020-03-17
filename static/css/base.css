@@ -24,6 +24,10 @@ body {
     font-weight: bold;
 }
 
+#content-header-volume {
+    float: right;
+}
+
 .content-leaderboard {
     text-align: left;
 }
