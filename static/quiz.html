@@ -20,7 +20,7 @@
         }
 
         function createWSConnection(nickname) {
-            ws = new WebSocket("ws://localhost:8080/ws");
+            ws = new WebSocket("ws://" + window.location.host + "/ws");
 
             ws.onopen = function (event) {
 
