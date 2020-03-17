@@ -1,12 +1,26 @@
 package quiz
 
-import "strings"
+import (
+	"math/rand"
+	"strings"
+	"time"
+)
 
 type quiz struct {
 	videoSource    string
 	title          string
 	answerVariants []string
 	start          int
+}
+
+func getShuffledQuizzes(quizzes []quiz) []quiz {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	ret := make([]quiz, len(quizzes))
+	perm := r.Perm(len(quizzes))
+	for i, randIndex := range perm {
+		ret[i] = quizzes[randIndex]
+	}
+	return ret
 }
 
 func (q *quiz) isAnswerRight(answer string) bool {

@@ -32,7 +32,7 @@ func NewRoom(roomID, adminID string) *Room {
 		adminID:       adminID,
 		RoomState:     RoomStateInit,
 		currentQuizID: 0,
-		allQuizzes:    hardcodedQuizzes,
+		allQuizzes:    getShuffledQuizzes(hardcodedQuizzes),
 	}
 }
 
