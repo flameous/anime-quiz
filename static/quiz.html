@@ -68,10 +68,12 @@
             ws.sendUserNotify("startGame");
         }
 
-        function onSendVideo(video_id) {
+        function onSendVideo(data) {
             document.getElementById("content-quiz-status").innerText = "Загружаем звук";
 
-            player.loadVideo(video_id, 0, () => {
+            data = JSON.parse(data);
+
+            player.loadVideo(data["video_id"], data["start"], () => {
                 ws.sendUserNotify("")
             })
         }

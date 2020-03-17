@@ -6,6 +6,7 @@ type quiz struct {
 	videoSource    string
 	title          string
 	answerVariants []string
+	start          int
 }
 
 func (q *quiz) isAnswerRight(answer string) bool {
@@ -23,15 +24,18 @@ var hardcodedQuizzes = []quiz{
 		videoSource:    "t-QSmNReDyI",
 		title:          "Neon Genesis Evangelion",
 		answerVariants: []string{"neon genesis evangelion", "evangelion", "eva", "nge"},
+		start:          0,
 	},
 	{
 		videoSource:    "-77UEct0cZM",
 		title:          "Boku no Hero Academia (Season 1)",
 		answerVariants: []string{"my hero academia", "boku no hero academia", "mha", "bnha", "my hero academy"},
+		start:          0,
 	},
 	{
 		videoSource:    "AgBUP8TJqV8",
 		title:          "Attack On Titan",
 		answerVariants: []string{"attack on titan", "shingeki no kyojin", "titan"},
+		start:          0,
 	},
 }

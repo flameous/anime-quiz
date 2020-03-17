@@ -166,9 +166,21 @@ func (r *Room) sendCurrentVideoToAllUsers() error {
 		return errors.New("video index out of bounds")
 	}
 
+	currentQuiz := r.allQuizzes[r.currentQuizID]
+
+	message := map[string]interface{}{
+		"video_id": currentQuiz.videoSource,
+		"start":    currentQuiz.start,
+	}
+
+	b, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
+
 	msg := serverMessage{
 		MessageType: serverMessageTypeSendVideo,
-		Message:     r.allQuizzes[r.currentQuizID].videoSource,
+		Message:     string(b),
 	}
 
 	r.users.setUsersToBuffered()

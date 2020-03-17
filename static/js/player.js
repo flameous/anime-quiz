@@ -15,7 +15,10 @@ export function init(player_id, onReady) {
 
 export function loadVideo(video_id, start, onBuffered) {
     player.loadVideoById(video_id, start, "small");
+
     player.mute();
+    player.seekTo(start);
+
     setTimeout(() => {
         player.pauseVideo();
         player.seekTo(start);
