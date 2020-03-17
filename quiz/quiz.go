@@ -32,6 +32,6 @@ var hardcodedQuizzes = []quiz{
 	{
 		videoSource:    "AgBUP8TJqV8",
 		title:          "Attack On Titan",
-		answerVariants: []string{"attack on titan", "shingeki no kyojin", "titan"},
+		answerVariants: []string{"attack on titan", "shingeki no kyojin", "titan", "snk"},
 	},
 }
