@@ -28,6 +28,10 @@ body {
     float: right;
 }
 
+#content-quiz-arbitrage {
+    text-align: left;
+}
+
 .content-leaderboard {
     text-align: left;
 }

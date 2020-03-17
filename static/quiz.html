@@ -16,6 +16,8 @@
             onSendVideo: onSendVideo,
             onStartPlaying: onStartPlaying,
             onAnswer: onAnswer,
+            onArbitrage: onArbitrage,
+            onArbitrageApproved: onArbitrageApproved,
             onGameOver: onGameOver,
         });
 
@@ -72,6 +74,7 @@
 
         function onSendVideo(data) {
             document.getElementById("content-quiz-status").innerText = "Загружаем звук";
+            document.getElementById("content-quiz-arbitrage").innerHTML = "";
 
             player.loadVideo(data["video_id"], data["start"], () => {
                 ws.sendUserNotify("")
@@ -103,6 +106,36 @@
         function onAnswer(answer) {
             document.getElementById("content-quiz-status").innerText = "Правильный ответ: " + answer;
             document.getElementById("content-quiz-form").style.display = "none";
+        }
+
+        function onArbitrage(data) {
+            let li = document.createElement("li");
+            let button = document.createElement("button");
+
+            button.innerText = data["user_id"] + ": " + data["answer"];
+            button.dataset.userID = data["user_id"];
+            button.onclick = sendArbitrage;
+
+            li.appendChild(button);
+
+            document.getElementById("content-quiz-arbitrage").appendChild(li);
+        }
+
+        function sendArbitrage() {
+            let user_id = this.dataset.userID;
+            this.parentElement.remove();
+
+            ws.sendArbitrage(user_id)
+        }
+
+        function onArbitrageApproved() {
+            let message = document.createElement("div");
+            message.innerText = "Ваш ответ принят арбитражом";
+
+            document.getElementById("messages").appendChild(message);
+            setTimeout(() => {
+                message.remove();
+            }, 30 * 1000);
         }
 
         function onGameOver(leaderboard) {
@@ -137,12 +170,14 @@
         <div id="content-quiz" style="display: none">
             <div id="content-quiz-status">Ожидаем запуска игры</div>
 
-            <button class="button" id="start-button">Начать игру</button>
+            <button class="button" id="start-button" style="display: none">Начать игру</button>
 
             <form id="content-quiz-form" style="display: none">
                 <input type="text" maxlength="50" id="content-quiz-input">
                 <button class="button">Отправить</button>
             </form>
+
+            <ul id="content-quiz-arbitrage"></ul>
         </div>
 
         <div class="content-leaderboard">

@@ -1,12 +1,15 @@
 const userMessageTypeHandShake = "userHandShake";
 const userMessageTypeNotify = "userNotify";
 const userMessageTypeAnswer = "userAnswer";
+const userMessageTypeArbitrage = "userArbitrage";
 
 const serverMessageTypeAdminNotify = "serverAdminNotify";
 const serverMessageTypeEnterNotify = "serverEnterNotify";
 const serverMessageTypeSendVideo = "serverSendVideo";
 const serverMessageTypeStartPlaying = "serverStartPlaying";
 const serverMessageTypeAnswer = "serverAnswer";
+const serverMessageTypeArbitrage = "serverArbitrage";
+const serverMessageTypeArbitrageApproved = "serverArbitrageResult";
 const serverMessageTypeGameOver = "serverGameOver";
 
 let ws;
@@ -16,6 +19,8 @@ let onEnterNotify;
 let onSendVideo;
 let onStartPlaying;
 let onAnswer;
+let onArbitrage;
+let onArbitrageApproved;
 let onGameOver;
 
 export function initConnection(user_id, room_id) {
@@ -41,6 +46,8 @@ export function setCallbacks(callbacks) {
     onSendVideo = callbacks.onSendVideo;
     onStartPlaying = callbacks.onStartPlaying;
     onAnswer = callbacks.onAnswer;
+    onArbitrage = callbacks.onArbitrage;
+    onArbitrageApproved = callbacks.onArbitrageApproved;
     onGameOver = callbacks.onGameOver;
 }
 
@@ -55,6 +62,13 @@ export function sendAnswer(answer) {
     send({
         message_type: userMessageTypeAnswer,
         message: answer,
+    });
+}
+
+export function sendArbitrage(user_id) {
+    send({
+        message_type: userMessageTypeArbitrage,
+        message: user_id,
     });
 }
 
@@ -93,6 +107,14 @@ function onMessage(event) {
 
         case serverMessageTypeAnswer:
             onAnswer(data.message);
+            break;
+
+        case serverMessageTypeArbitrage:
+            onArbitrage(data.message);
+            break;
+
+        case serverMessageTypeArbitrageApproved:
+            onArbitrageApproved();
             break;
 
         case serverMessageTypeGameOver:

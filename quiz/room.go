@@ -110,20 +110,28 @@ func (r *Room) handleRoomReady(u *User, msg UserMessage) {
 func (r *Room) handleRoomPlaying(u *User, msg UserMessage) {
 	// receive answers
 	// but just once
-	if msg.MessageType != UserMessageTypeAnswer || u.isAnswered {
+	if msg.MessageType != UserMessageTypeAnswer || len(u.answer) > 0 {
 		return
 	}
 
-	q := r.allQuizzes[r.currentQuizID]
-	if q.isAnswerRight(msg.Message) {
-		u.score++
-	}
-	u.isAnswered = true
-
+	u.answer = msg.Message
 }
 
 func (r *Room) handleRoomShowAnswer(u *User, msg UserMessage) {
-	// skip all messages
+	// Arbitrage
+	if msg.MessageType != UserMessageTypeArbitrage {
+		return
+	}
+
+	userID := msg.Message
+
+	// go away if you already vote
+	if _, ok := u.arbitrageVotes[userID]; ok {
+		return
+	}
+
+	r.users.getUser(userID).arbitrageScore++
+	u.arbitrageVotes[userID] = true
 }
 
 func (r *Room) handleFinishedRoom(u *User, msg UserMessage) {
@@ -197,10 +205,34 @@ loop:
 				log.Printf("room: send answer: %v", err)
 			}
 
+			// Check answers and send arbitrage
+			for _, u := range r.users.container {
+				if q.isAnswerRight(u.answer) {
+					u.score++
+					u.isAnswerRight = true
+				} else {
+					if len(u.answer) > 0 {
+						srvMessage = serverMessage{
+							MessageType: serverMessageTypeArbitrage,
+							Message: map[string]interface{}{
+								"user_id": u.id,
+								"answer":  u.answer,
+							},
+						}
+
+						err = r.users.sendMessageForEachUserWithoutOne(u.id, srvMessage)
+						if err != nil {
+							log.Printf("room: send an arbitrage: %v", err)
+						}
+					}
+				}
+			}
+
 		case RoomStatePlayShowAnswer:
 			time.Sleep(showAnswerDuration)
 			if r.currentQuizID >= len(r.allQuizzes)-1 { // this quiz is the last one
 				r.RoomState = RoomStateFinished
+				r.users.sendArbitrageApprovedToUsers()
 
 				err := r.users.SendResultsForEachUser()
 				if err != nil {
@@ -210,6 +242,8 @@ loop:
 			} else {
 				// we have more quizzes to run
 				r.RoomState = RoomStateReadyToPlay
+				r.users.sendArbitrageApprovedToUsers()
+
 				r.currentQuizID++
 				err := r.sendCurrentVideoToAllUsers()
 				if err != nil {
