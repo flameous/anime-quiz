@@ -1,11 +1,14 @@
 package quiz
 
 type User struct {
-	id         string
-	state      userState
-	conn       connection
-	isAnswered bool
-	score      int
+	id             string
+	state          userState
+	conn           connection
+	answer         string
+	isAnswerRight  bool
+	arbitrageVotes map[string]bool
+	arbitrageScore int
+	score          int
 }
 
 func NewUser(userID string, c connection) *User {

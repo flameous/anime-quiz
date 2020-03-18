@@ -1,11 +1,16 @@
-FROM golang:1.13.8
+FROM golang:1.14
 
-COPY . /go/src/github.com/flameous/anime-quiz
-WORKDIR /go/src/github.com/flameous/anime-quiz
+WORKDIR /app
 
-RUN go get -d -v ./...
-RUN go install -v ./...
+# Cache modules
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+
+COPY . .
+
+RUN go build -v
 
 EXPOSE 8080
 
-CMD ["anime-quiz"]
+CMD ["./anime-quiz"]

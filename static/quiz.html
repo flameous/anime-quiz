@@ -2,197 +2,80 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Quiz Room</title>
-    <script>
-        let ws;
+    <title>Anime Quiz - Игровая комната</title>
 
-        function setNicknameAndStart() {
+    <link rel="stylesheet" href="../static/css/base.css">
 
-            var nickname = document.getElementById("nickname").value;
-            if (nickname.length === 0) {
-                alert("nickname is invalid, so are you!");
-                return;
+    <script type="module">
+        import {initGame, showLeaderboard} from "../static/js/game.js";
 
-            }
-            createWSConnection(nickname);
-            document.getElementById("nickname-box").style.display = "none";
+        const room_id = window.location.pathname.split("/")[2];
 
-        }
-
-        function createWSConnection(nickname) {
-            let protocol = "ws://";
-
-            if (window.location.protocol === "https:") {
-                protocol = "wss://";
-            }
-
-            ws = new WebSocket(protocol + window.location.host + "/ws");
-
-            ws.onopen = function (event) {
-
-                let p = window.location.pathname.split("/");
-                ws.send(JSON.stringify({
-                    room_id: p[2],
-                    message: nickname,
-                    message_type: "userHandShake"
-                }));
-            };
-
-            ws.onmessage = function (event) {
-                var data = JSON.parse(event.data);
-                console.log(data);
-
-                switch (data.message_type) {
-                    case "serverNotify":
-                        // user is admin
-                        // show button
-                        document.getElementById("adminButton").style.display = "inline";
+        fetch("/api/quiz_status?room_id=" + room_id)
+            .then(response => response.json())
+            .then((data) => {
+                switch (data["status"]) {
+                    case "roomNotExist":
+                    case "roomOpen":
+                        initGame(room_id);
                         break;
-
-                    case "serverSendVideo":
-                        loadVideo(data.message);
+                    case "roomPlaying":
+                        document.getElementById("content-loader").innerText = "Игра в этой комнате уже идёт";
                         break;
-
-                    case "serverStartPlaying":
-                        onServerReady();
-                        // open user input field
+                    case "roomFinished":
+                        document.getElementById("content-loader").innerText = "Игра в этой комнате уже завершена";
+                        showLeaderboard(data["result"]);
                         break;
-
-                    case "serverAnswer":
-                        onServerAnswer(data.message);
-                        break;
-
-                    case "serverGameOver":
-                        onServerGameOver(data.message);
-                        break;
-                }
-            };
-
-            ws.onclose = function (event) {
-                alert("closed!");
-            };
-        }
-
-        function adminStartGame() {
-            document.getElementById("adminButton").style.display = "none";
-            ws.send(JSON.stringify({
-                message: "startGame",
-                message_type: "userNotify"
-            }));
-        }
-
-        function notifyUserIsReady() {
-            // video is loaded
-            ws.send(JSON.stringify({
-                message_type: "userNotify"
-            }));
-        }
-
-        function sendAnswer() {
-            answer = document.getElementById("userAnswer").value;
-            ws.send(JSON.stringify({
-                message_type: "userAnswer",
-                message: answer,
-            }));
-            document.getElementById("user-input-box").style.display = "none";
-            document.getElementById("userAnswer").value = "";
-        }
-
-        function onServerAnswer(msg) {
-            document.getElementById("user-input-box").style.display = "none";
-            document.getElementById("userAnswer").value = "";
-            document.getElementById("anime-title").innerText = msg;
-        }
-
-        function onServerGameOver(msg) {
-            player.stopVideo();
-            leaderBoardMap = JSON.parse(msg);
-
-            text = "";
-            for (k in leaderBoardMap) {
-                row = k + " : " + leaderBoardMap[k] + "\n";
-                text += row;
-            }
-            document.getElementById("leader-board").innerText = text;
-        }
-
-    </script>
-
-    <script>
-        function loadPlayer() {
-            var tag = document.createElement('script');
-            tag.src = "https://www.youtube.com/iframe_api";
-            var firstScriptTag = document.getElementsByTagName('script')[0];
-            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-        }
-
-        loadPlayer();
-
-        var player;
-
-        function onYouTubeIframeAPIReady() {
-            player = new YT.Player('player', {
-                height: '200',
-                width: '200',
-                playerVars: {
-                    'autoplay': 0,
-                    'controls': 0,
-                    'disablekb': 0,
-                    'fs': 0,
-                    'iv_load_policy': 3,
-                    'loop': 0,
-                    'rel': 0,
-                    'showinfo': 0,
-                },
-                events: {
-                    'onReady': onPlayerReady
                 }
             });
-        }
-
-        function onPlayerReady() {
-        }
-
-        function loadVideo(videoId) {
-            player.loadVideoById(videoId, 0, "small");
-            player.mute();
-            setTimeout(onBuffered, 5000);
-            document.getElementById("anime-title").innerText = "Guess the anime!";
-        }
-
-        function onBuffered() {
-            player.pauseVideo();
-            player.seekTo(0);
-            player.unMute();
-            player.setVolume(10);
-
-            notifyUserIsReady();
-        }
-
-        function onServerReady() {
-            player.playVideo();
-            document.getElementById("user-input-box").style.display = "inline";
-        }
     </script>
 </head>
 <body>
-<div id="nickname-box">
-    <p>Введи никнейм:</p>
-    <input type="text" id="nickname">
-    <br>
-    <button onclick="setNicknameAndStart()">Ок</button>
-</div>
-<br>
-<button onclick="adminStartGame()" style="display:none" id="adminButton">Начать игру</button>
-<div id="anime-title">Guess the anime!</div>
-<div id="user-input-box" style="display:none">
-    <input type="text" id="userAnswer">
-    <br>
-    <button onclick="sendAnswer()">Отправить ответ</button>
+
+<div class="container">
+    <div class="content">
+        <div class="content-head">
+            Угадай аниме <span id="content-header-counter"></span>
+            <input type="range" id="content-header-volume" value="100" min="0" max="100">
+        </div>
+
+        <div id="content-loader">Подготавливаем браузер</div>
+        <form id="content-join-form" style="display: none">
+            <input type="text" id="user-id" placeholder="Никнейм">
+            <button class="button">Войти</button>
+        </form>
+
+
+        <div id="content-quiz" style="display: none">
+            <div id="content-quiz-progress"></div>
+
+            <div id="content-quiz-status">Ожидаем запуска игры</div>
+
+            <div id="content-admin-panel" style="display: none">
+                <input type="number" min="1" max="" placeholder="Количество раундов" id="num-rounds">
+                <button class="button" id="start-button">Начать игру</button>
+            </div>
+
+
+            <form id="content-quiz-form" style="display: none">
+                <input type="text" maxlength="50" id="content-quiz-input">
+                <button class="button">Отправить</button>
+            </form>
+
+            <ul id="content-quiz-arbitrage"></ul>
+        </div>
+
+        <div class="content-leaderboard">
+            <ul id="content-leaderboard-list"></ul>
+        </div>
+    </div>
 </div>
 
-<div id="player" style="display:none"></div>
+<div id="messages">
 
-<pre id="leader-board"></pre>
+</div>
+
+<div id="player" style="display: none"></div>
+
 </body>
 </html>

@@ -2,33 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Index</title>
+    <title>Anime Quiz - Лобби</title>
+
+    <link rel="stylesheet" href="../static/css/base.css">
 
     <script>
         function randomStr(len) {
-            var ans = "";
-            var arr = "qwertyuiopasdfghjklzxcvbnm1234567890";
-            for (var i = len; i > 0; i--) {
-                var nextElement = arr[Math.floor(Math.random() * arr.length)];
-                console.log(nextElement);
-                ans += nextElement;
+            const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+            let ans = "";
+            for (let i = len; i > 0; i--) {
+                ans += alphabet[Math.floor(Math.random() * alphabet.length)];
             }
             return ans;
         }
 
-        function buttonClick() {
-            quizID = randomStr(6).trim(); // todo: generate quiz id on server
-            url = window.location.protocol + "//" + window.location.host + "/quiz/" + quizID;
+        function redirectToRoom() {
+            const quizID = randomStr(6).trim(); // todo: generate quiz id on server
+            const url = window.location.protocol + "//" + window.location.host + "/quiz/" + quizID;
             window.location.replace(url);
         }
     </script>
 </head>
 <body>
-Start quiz!
-<br>
-<button onclick="buttonClick()">
-    Create new Anime Opening quiz!
-</button>
+
+<div class="container">
+    <div class="content">
+        <div class="content-head">
+            Угадай аниме
+        </div>
+
+        <button class="button" onclick="redirectToRoom()">Создать новую игровую комнату</button>
+    </div>
+</div>
 
 </body>
 </html>
