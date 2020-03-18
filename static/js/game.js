@@ -1,5 +1,6 @@
 import * as player from "./player.js";
 import * as ws from "./ws.js";
+import * as UI from "./UI.js";
 
 const state = {
     "room_id": "",
@@ -11,8 +12,8 @@ export function initGame(room_id) {
     state.room_id = room_id;
 
     player.init("player", () => {
-        document.getElementById("content-loader").style.display = "none";
-        document.getElementById("content-join-form").style.display = "block";
+        UI.hide(UI.contentLoader);
+        UI.show(UI.contentJoinForm);
     });
 
     ws.setCallbacks({
@@ -27,10 +28,10 @@ export function initGame(room_id) {
         onGameOver: onGameOver,
     });
 
-    document.getElementById("content-join-form").onsubmit = joinGame;
-    document.getElementById("start-button").onclick = startGame;
-    document.getElementById("content-quiz-form").onsubmit = sendAnswer;
-    document.getElementById("content-header-volume").oninput = function () {
+    UI.contentJoinForm.onsubmit = joinGame;
+    UI.startButton.onclick = startGame;
+    UI.contentQuizForm.onsubmit = sendAnswer;
+    UI.contentHeaderVolume.oninput = function () {
         player.setVolume(parseInt(this.value));
     };
 }
@@ -40,7 +41,7 @@ export function showLeaderboard(leaderboard) {
         let li = document.createElement("li");
         li.innerText = user_id + ": " + leaderboard[user_id];
 
-        document.getElementById("content-leaderboard-list").appendChild(li);
+        UI.contentLeaderboardList.appendChild(li);
     }
 }
 
@@ -54,43 +55,37 @@ function joinGame(event) {
 
     ws.initConnection(user_id, state.room_id);
 
-    document.getElementById("content-join-form").style.display = "none";
-    document.getElementById("content-quiz").style.display = "block";
+    UI.hide(UI.contentJoinForm);
+    UI.show(UI.contentQuiz);
 }
 
 function onEnterNotify(data) {
-    document.getElementById("content-header-counter").innerText = "(в игре: " + data["count"] + ")";
+    UI.contentHeaderCounter.innerText = `(в игре: ${data["count"]})`;
 
-    let message = document.createElement("div");
-    message.innerText = data["user_id"] + " подключился";
-
-    document.getElementById("messages").appendChild(message);
-    setTimeout(() => {
-        message.remove();
-    }, 30 * 1000);
+    UI.showMessage(`${data["user_id"]} подключился`);
 }
 
 function onAdminNotify() {
-    document.getElementById("start-button").style.display = "inline";
+    UI.show(UI.startButton);
 }
 
 function startGame() {
-    document.getElementById("start-button").style.display = "none";
+    UI.hide(UI.startButton);
 
     ws.sendUserNotify("startGame");
 }
 
 function onStartGame(count_quizzes) {
     state.count_quizzes = count_quizzes;
-    document.getElementById("content-quiz-progress").innerText = `${state.current_quiz} / ${state.count_quizzes}`;
+    UI.updateProgressBar(state.current_quiz, state.count_quizzes)
 }
 
 function onSendVideo(data) {
-    document.getElementById("content-quiz-status").innerText = "Загружаем звук";
-    document.getElementById("content-quiz-arbitrage").innerHTML = "";
+    UI.contentQuizStatus.innerText = "Загружаем звук";
+    UI.contentQuizArbitrage.innerHTML = "";
 
     state.current_quiz++;
-    document.getElementById("content-quiz-progress").innerText = `${state.current_quiz} / ${state.count_quizzes}`;
+    UI.updateProgressBar(state.current_quiz, state.count_quizzes)
 
     player.loadVideo(data["video_id"], data["start"], () => {
         ws.sendUserNotify("")
@@ -98,9 +93,9 @@ function onSendVideo(data) {
 }
 
 function onStartPlaying() {
-    document.getElementById("content-quiz-status").innerText = "Угадываем";
-    document.getElementById("content-quiz-form").style.display = "block";
-    document.getElementById("content-quiz-input").focus();
+    UI.contentQuizStatus.innerText = "Угадываем";
+    UI.show(UI.contentQuizForm);
+    UI.contentQuizInput.focus();
 
     player.playVideo();
 }
@@ -108,20 +103,20 @@ function onStartPlaying() {
 function sendAnswer(event) {
     event.preventDefault();
 
-    let answer = document.getElementById("content-quiz-input").value;
+    let answer = UI.contentQuizInput.value;
     if (answer === "") {
         return;
     }
-    document.getElementById("content-quiz-input").value = "";
 
-    document.getElementById("content-quiz-form").style.display = "none";
+    UI.contentQuizInput.value = "";
+    UI.hide(UI.contentQuizForm);
 
     ws.sendAnswer(answer);
 }
 
 function onAnswer(answer) {
-    document.getElementById("content-quiz-status").innerText = "Правильный ответ: " + answer;
-    document.getElementById("content-quiz-form").style.display = "none";
+    UI.contentQuizStatus.innerText = "Правильный ответ: " + answer;
+    UI.hide(UI.contentQuizForm);
 }
 
 function onArbitrage(data) {
@@ -134,7 +129,7 @@ function onArbitrage(data) {
 
     li.appendChild(button);
 
-    document.getElementById("content-quiz-arbitrage").appendChild(li);
+    UI.contentQuizArbitrage.appendChild(li);
 }
 
 function sendArbitrage() {
@@ -145,17 +140,11 @@ function sendArbitrage() {
 }
 
 function onArbitrageApproved() {
-    let message = document.createElement("div");
-    message.innerText = "Ваш ответ принят арбитражом";
-
-    document.getElementById("messages").appendChild(message);
-    setTimeout(() => {
-        message.remove();
-    }, 30 * 1000);
+    UI.showMessage("Ваш ответ принят арбитражом");
 }
 
 function onGameOver(leaderboard) {
-    document.getElementById("content-quiz").style.display = "none";
+    UI.hide(UI.contentQuiz);
     player.stopVideo();
 
     showLeaderboard(leaderboard)
