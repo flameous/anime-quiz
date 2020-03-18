@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/flameous/anime-quiz/quiz"
 	"golang.org/x/net/websocket"
+	"io"
 	"log"
 	"net/http"
 	"sync"
@@ -128,7 +129,9 @@ func readMessage(conn *websocket.Conn, um *quiz.UserMessage) error {
 	b := make([]byte, 2048)
 	n, err := conn.Read(b)
 	if err != nil {
-		log.Printf("server: ws: read user msg: %v", err)
+		if err != io.EOF {
+			log.Printf("server: ws: read user msg: %v", err)
+		}
 		return err
 	}
 

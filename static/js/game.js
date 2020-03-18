@@ -147,5 +147,7 @@ function onGameOver(leaderboard) {
     UI.hide(UI.contentQuiz);
     player.stopVideo();
 
-    showLeaderboard(leaderboard)
+    showLeaderboard(leaderboard);
+
+    ws.close();
 }

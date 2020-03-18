@@ -75,6 +75,10 @@ export function sendArbitrage(user_id) {
     });
 }
 
+export function close() {
+    ws.close();
+}
+
 function send(msg) {
     ws.send(JSON.stringify(msg));
 }
