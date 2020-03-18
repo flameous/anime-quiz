@@ -32,6 +32,15 @@ export function initGame(room_id) {
     };
 }
 
+export function showLeaderboard(leaderboard) {
+    for (let user_id in leaderboard) {
+        let li = document.createElement("li");
+        li.innerText = user_id + ": " + leaderboard[user_id];
+
+        document.getElementById("content-leaderboard-list").appendChild(li);
+    }
+}
+
 function joinGame(event) {
     event.preventDefault();
 
@@ -138,10 +147,5 @@ function onGameOver(leaderboard) {
     document.getElementById("content-quiz").style.display = "none";
     player.stopVideo();
 
-    for (let user_id in leaderboard) {
-        let li = document.createElement("li");
-        li.innerText = user_id + ": " + leaderboard[user_id];
-
-        document.getElementById("content-leaderboard-list").appendChild(li);
-    }
+    showLeaderboard(leaderboard)
 }

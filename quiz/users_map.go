@@ -50,6 +50,19 @@ func (umap *usersMap) isAllReady() bool {
 
 	return isAllReady
 }
+
+func (umap *usersMap) getScores() map[string]int {
+	umap.mu.RLock()
+	defer umap.mu.RUnlock()
+
+	usersScore := make(map[string]int)
+	for _, u := range umap.container {
+		usersScore[u.id] = u.score
+	}
+
+	return usersScore
+}
+
 func (umap *usersMap) sendMessageToUser(userID string, msg serverMessage) error {
 	umap.mu.RLock()
 	defer umap.mu.RUnlock()
@@ -126,32 +139,14 @@ func (umap *usersMap) sendArbitrageApprovedToUsers() {
 
 // on gameover
 func (umap *usersMap) SendResultsForEachUser() error {
-	umap.mu.RLock()
-	defer umap.mu.RUnlock()
-
-	var anyErr error
-
-	// collect all users score
-	usersScore := make(map[string]int)
-	for _, u := range umap.container {
-		usersScore[u.id] = u.score
-	}
+	usersScore := umap.getScores()
 
 	msg := serverMessage{
 		MessageType: serverMessageTypeGameOver,
 		Message:     usersScore,
 	}
-	for _, u := range umap.container {
-		err := u.sendMessageToUser(msg)
-		if err != nil {
-			anyErr = err
-		}
-	}
 
-	if anyErr != nil {
-		return anyErr
-	}
-	return nil
+	return umap.sendMessageForEachUser(msg)
 }
 
 func (umap *usersMap) setUsersToBuffered() {

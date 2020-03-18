@@ -38,9 +38,7 @@ func (s *Server) Start(addr string) error {
 		if roomID, ok := r.URL.Query()["room_id"]; ok {
 			room, _ := s.getRoomByID(roomID[0])
 
-			js, err := json.Marshal(map[string]string{
-				"status": quiz.GetRoomStatus(room),
-			})
+			js, err := json.Marshal(quiz.GetRoomStatus(room))
 
 			if err != nil {
 				log.Printf("server: quiz status: can't marshal response: %v", err)

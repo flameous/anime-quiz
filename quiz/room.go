@@ -43,26 +43,33 @@ func NewRoom(roomID, adminID string) *Room {
 	}
 }
 
-func GetRoomStatus(r *Room) string {
+func GetRoomStatus(r *Room) map[string]interface{} {
+	msg := map[string]interface{}{
+		"status": nil,
+	}
+
 	if r != nil {
 		switch r.RoomState {
 		case RoomStateInit:
-			return RoomStatusOpen
+			msg["status"] = RoomStatusOpen
 		case RoomStateReadyToPlay:
 			fallthrough
 		case RoomStatePlayVideo:
 			fallthrough
 		case RoomStatePlayShowAnswer:
-			return RoomStatusPlaying
+			msg["status"] = RoomStatusPlaying
 		case RoomStateFinished:
-			return RoomStatusFinished
+			msg["status"] = RoomStatusFinished
+			msg["result"] = r.users.getScores()
 		default:
 			log.Printf("room: get room status: undefined room state: %v", r.RoomState)
-			return ""
+			return nil
 		}
 	} else {
-		return RoomStatusNotExist
+		msg["status"] = RoomStatusNotExist
 	}
+
+	return msg
 }
 
 func (r *Room) AddUser(u *User) {
@@ -265,7 +272,7 @@ loop:
 
 				err := r.users.SendResultsForEachUser()
 				if err != nil {
-					log.Printf("room: send game over: %v", err)
+					log.Printf("room: send result: %v", err)
 				}
 
 			} else {

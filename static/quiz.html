@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="../static/css/base.css">
 
     <script type="module">
-        import {initGame} from "../static/js/game.js";
+        import {initGame, showLeaderboard} from "../static/js/game.js";
 
         const room_id = window.location.pathname.split("/")[2];
 
@@ -24,6 +24,7 @@
                         break;
                     case "roomFinished":
                         document.getElementById("content-loader").innerText = "Игра в этой комнате уже завершена";
+                        showLeaderboard(data["result"]);
                         break;
                 }
             });
