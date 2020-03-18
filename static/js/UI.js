@@ -1,5 +1,7 @@
 export const contentLoader = document.getElementById("content-loader");
 export const contentJoinForm = document.getElementById("content-join-form");
+export const contentAdminPanel = document.getElementById("content-admin-panel");
+export const numRounds = document.getElementById("num-rounds");
 export const startButton = document.getElementById("start-button");
 export const contentQuizForm = document.getElementById("content-quiz-form");
 export const contentHeaderVolume = document.getElementById("content-header-volume");

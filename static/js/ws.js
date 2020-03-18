@@ -97,7 +97,7 @@ function onMessage(event) {
 
     switch (data.message_type) {
         case serverMessageTypeAdminNotify:
-            onAdminNotify();
+            onAdminNotify(data.message);
             break;
 
         case serverMessageTypeEnterNotify:

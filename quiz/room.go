@@ -3,6 +3,7 @@ package quiz
 import (
 	"errors"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -106,11 +107,24 @@ func (r *Room) handleRoomInit(u *User, msg UserMessage) {
 		// ignore other users input
 		return
 	}
-	if msg.MessageType == UserMessageTypeNotify &&
-		msg.Message == "startGame" {
+	if msg.MessageType == UserMessageTypeNotify {
+		count, err := strconv.Atoi(msg.Message)
+		if err != nil {
+			log.Printf("room handler: admin send NaN: %v", err)
+			return
+		}
+
+		if count < 1 {
+			count = 1
+		}
+		if count > len(r.allQuizzes) {
+			count = len(r.allQuizzes)
+		}
+		r.allQuizzes = r.allQuizzes[:count]
+
 		r.RoomState = RoomStateReadyToPlay
 
-		err := r.sendStartGameToAllUsers()
+		err = r.sendStartGameToAllUsers()
 		if err != nil {
 			log.Printf("room handler: can't send start game: %v", err)
 		}
@@ -182,7 +196,7 @@ func (r *Room) handleFinishedRoom(u *User, msg UserMessage) {
 func (r *Room) SendAdminNotify(userID string) error {
 	msg := serverMessage{
 		MessageType: serverMessageTypeAdminNotify,
-		Message:     "ti glavnuy!",
+		Message:     len(r.allQuizzes),
 	}
 	return r.users.sendMessageToUser(userID, msg)
 }

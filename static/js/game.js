@@ -48,7 +48,7 @@ export function showLeaderboard(leaderboard) {
 function joinGame(event) {
     event.preventDefault();
 
-    let user_id = document.getElementById("user-id").value;
+    let user_id = UI.userId.value;
     if (user_id === "") {
         return
     }
@@ -65,14 +65,16 @@ function onEnterNotify(data) {
     UI.showMessage(`${data["user_id"]} подключился`);
 }
 
-function onAdminNotify() {
-    UI.show(UI.startButton);
+function onAdminNotify(num_rounds) {
+    UI.show(UI.contentAdminPanel);
+    UI.numRounds.value = num_rounds;
+    UI.numRounds.max = num_rounds;
 }
 
 function startGame() {
-    UI.hide(UI.startButton);
+    UI.hide(UI.contentAdminPanel);
 
-    ws.sendUserNotify("startGame");
+    ws.sendUserNotify(UI.numRounds.value);
 }
 
 function onStartGame(count_quizzes) {
