@@ -2,7 +2,9 @@ import * as player from "./player.js";
 import * as ws from "./ws.js";
 
 const state = {
-    "room_id": ""
+    "room_id": "",
+    "count_quizzes": 0,
+    "current_quiz": 0
 };
 
 export function initGame(room_id) {
@@ -16,6 +18,7 @@ export function initGame(room_id) {
     ws.setCallbacks({
         onAdminNotify: onAdminNotify,
         onEnterNotify: onEnterNotify,
+        onStartGame: onStartGame,
         onSendVideo: onSendVideo,
         onStartPlaying: onStartPlaying,
         onAnswer: onAnswer,
@@ -77,9 +80,17 @@ function startGame() {
     ws.sendUserNotify("startGame");
 }
 
+function onStartGame(count_quizzes) {
+    state.count_quizzes = count_quizzes;
+    document.getElementById("content-quiz-progress").innerText = `${state.current_quiz} / ${state.count_quizzes}`;
+}
+
 function onSendVideo(data) {
     document.getElementById("content-quiz-status").innerText = "Загружаем звук";
     document.getElementById("content-quiz-arbitrage").innerHTML = "";
+
+    state.current_quiz++;
+    document.getElementById("content-quiz-progress").innerText = `${state.current_quiz} / ${state.count_quizzes}`;
 
     player.loadVideo(data["video_id"], data["start"], () => {
         ws.sendUserNotify("")

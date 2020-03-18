@@ -5,6 +5,7 @@ const userMessageTypeArbitrage = "userArbitrage";
 
 const serverMessageTypeAdminNotify = "serverAdminNotify";
 const serverMessageTypeEnterNotify = "serverEnterNotify";
+const serverMessageTypeStartGame = "serverStartGame";
 const serverMessageTypeSendVideo = "serverSendVideo";
 const serverMessageTypeStartPlaying = "serverStartPlaying";
 const serverMessageTypeAnswer = "serverAnswer";
@@ -16,6 +17,7 @@ let ws;
 
 let onAdminNotify;
 let onEnterNotify;
+let onStartGame;
 let onSendVideo;
 let onStartPlaying;
 let onAnswer;
@@ -43,6 +45,7 @@ export function initConnection(user_id, room_id) {
 export function setCallbacks(callbacks) {
     onAdminNotify = callbacks.onAdminNotify;
     onEnterNotify = callbacks.onEnterNotify;
+    onStartGame = callbacks.onStartGame;
     onSendVideo = callbacks.onSendVideo;
     onStartPlaying = callbacks.onStartPlaying;
     onAnswer = callbacks.onAnswer;
@@ -93,12 +96,16 @@ function onMessage(event) {
             onAdminNotify();
             break;
 
-        case serverMessageTypeSendVideo:
-            onSendVideo(data.message);
-            break;
-
         case serverMessageTypeEnterNotify:
             onEnterNotify(data.message);
+            break;
+
+        case serverMessageTypeStartGame:
+            onStartGame(data.message);
+            break;
+
+        case serverMessageTypeSendVideo:
+            onSendVideo(data.message);
             break;
 
         case serverMessageTypeStartPlaying:

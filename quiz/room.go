@@ -110,9 +110,14 @@ func (r *Room) handleRoomInit(u *User, msg UserMessage) {
 		msg.Message == "startGame" {
 		r.RoomState = RoomStateReadyToPlay
 
-		err := r.sendCurrentVideoToAllUsers()
+		err := r.sendStartGameToAllUsers()
 		if err != nil {
-			log.Printf("room handler: handleRoomInit: %v", err)
+			log.Printf("room handler: can't send start game: %v", err)
+		}
+
+		err = r.sendCurrentVideoToAllUsers()
+		if err != nil {
+			log.Printf("room handler: can't send current video on start: %v", err)
 		}
 	}
 }
@@ -192,6 +197,15 @@ func (r *Room) SendEnterNotifyToAll(userID string) error {
 			"count":   len(r.users.container),
 			"user_id": userID,
 		},
+	}
+
+	return r.users.sendMessageForEachUser(msg)
+}
+
+func (r *Room) sendStartGameToAllUsers() error {
+	msg := serverMessage{
+		MessageType: serverMessageTypeStartGame,
+		Message:     len(r.allQuizzes),
 	}
 
 	return r.users.sendMessageForEachUser(msg)

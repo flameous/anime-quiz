@@ -21,6 +21,7 @@ const (
 
 	serverMessageTypeAdminNotify       = "serverAdminNotify"
 	serverMessageTypeEnterNotify       = "serverEnterNotify"
+	serverMessageTypeStartGame         = "serverStartGame"
 	serverMessageTypeSendVideo         = "serverSendVideo"
 	serverMessageTypeStartPlaying      = "serverStartPlaying"
 	serverMessageTypeAnswer            = "serverAnswer"
