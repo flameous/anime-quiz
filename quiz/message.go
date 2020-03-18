@@ -1,9 +1,9 @@
 package quiz
 
 type serverMessage struct {
-	ID          string `json:"id,omitempty"` // for debug
-	MessageType string `json:"message_type"`
-	Message     string `json:"message"`
+	ID          string      `json:"id,omitempty"` // for debug
+	MessageType string      `json:"message_type"`
+	Message     interface{} `json:"message"`
 }
 
 type UserMessage struct {
@@ -17,10 +17,15 @@ const (
 	UserMessageTypeHandShake = "userHandShake"
 	UserMessageTypeNotify    = "userNotify"
 	UserMessageTypeAnswer    = "userAnswer"
+	UserMessageTypeArbitrage = "userArbitrage"
 
-	serverMessageTypeNotify       = "serverNotify"
-	serverMessageTypeSendVideo    = "serverSendVideo"
-	serverMessageTypeStartPlaying = "serverStartPlaying"
-	serverMessageTypeAnswer       = "serverAnswer"
-	serverMessageTypeGameOver     = "serverGameOver"
+	serverMessageTypeAdminNotify       = "serverAdminNotify"
+	serverMessageTypeEnterNotify       = "serverEnterNotify"
+	serverMessageTypeStartGame         = "serverStartGame"
+	serverMessageTypeSendVideo         = "serverSendVideo"
+	serverMessageTypeStartPlaying      = "serverStartPlaying"
+	serverMessageTypeAnswer            = "serverAnswer"
+	serverMessageTypeArbitrage         = "serverArbitrage"
+	serverMessageTypeArbitrageApproved = "serverArbitrageResult"
+	serverMessageTypeGameOver          = "serverGameOver"
 )

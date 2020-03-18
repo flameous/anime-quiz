@@ -3,6 +3,7 @@ package quiz
 import (
 	"errors"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -14,6 +15,13 @@ const (
 	RoomStatePlayVideo
 	RoomStatePlayShowAnswer
 	RoomStateFinished
+)
+
+const (
+	RoomStatusNotExist = "roomNotExist"
+	RoomStatusOpen     = "roomOpen"
+	RoomStatusPlaying  = "roomPlaying"
+	RoomStatusFinished = "roomFinished"
 )
 
 type Room struct {
@@ -32,8 +40,37 @@ func NewRoom(roomID, adminID string) *Room {
 		adminID:       adminID,
 		RoomState:     RoomStateInit,
 		currentQuizID: 0,
-		allQuizzes:    hardcodedQuizzes,
+		allQuizzes:    getShuffledQuizzes(hardcodedQuizzes),
 	}
+}
+
+func GetRoomStatus(r *Room) map[string]interface{} {
+	msg := map[string]interface{}{
+		"status": nil,
+	}
+
+	if r != nil {
+		switch r.RoomState {
+		case RoomStateInit:
+			msg["status"] = RoomStatusOpen
+		case RoomStateReadyToPlay:
+			fallthrough
+		case RoomStatePlayVideo:
+			fallthrough
+		case RoomStatePlayShowAnswer:
+			msg["status"] = RoomStatusPlaying
+		case RoomStateFinished:
+			msg["status"] = RoomStatusFinished
+			msg["result"] = r.users.getScores()
+		default:
+			log.Printf("room: get room status: undefined room state: %v", r.RoomState)
+			return nil
+		}
+	} else {
+		msg["status"] = RoomStatusNotExist
+	}
+
+	return msg
 }
 
 func (r *Room) AddUser(u *User) {
@@ -70,13 +107,31 @@ func (r *Room) handleRoomInit(u *User, msg UserMessage) {
 		// ignore other users input
 		return
 	}
-	if msg.MessageType == UserMessageTypeNotify &&
-		msg.Message == "startGame" {
+	if msg.MessageType == UserMessageTypeNotify {
+		count, err := strconv.Atoi(msg.Message)
+		if err != nil {
+			log.Printf("room handler: admin send NaN: %v", err)
+			return
+		}
+
+		if count < 1 {
+			count = 1
+		}
+		if count > len(r.allQuizzes) {
+			count = len(r.allQuizzes)
+		}
+		r.allQuizzes = r.allQuizzes[:count]
+
 		r.RoomState = RoomStateReadyToPlay
 
-		err := r.sendCurrentVideoToAllUsers()
+		err = r.sendStartGameToAllUsers()
 		if err != nil {
-			log.Printf("room handler: handleRoomInit: %v", err)
+			log.Printf("room handler: can't send start game: %v", err)
+		}
+
+		err = r.sendCurrentVideoToAllUsers()
+		if err != nil {
+			log.Printf("room handler: can't send current video on start: %v", err)
 		}
 	}
 }
@@ -110,20 +165,28 @@ func (r *Room) handleRoomReady(u *User, msg UserMessage) {
 func (r *Room) handleRoomPlaying(u *User, msg UserMessage) {
 	// receive answers
 	// but just once
-	if msg.MessageType != UserMessageTypeAnswer || u.isAnswered {
+	if msg.MessageType != UserMessageTypeAnswer || len(u.answer) > 0 {
 		return
 	}
 
-	q := r.allQuizzes[r.currentQuizID]
-	if q.isAnswerRight(msg.Message) {
-		u.score++
-	}
-	u.isAnswered = true
-
+	u.answer = msg.Message
 }
 
 func (r *Room) handleRoomShowAnswer(u *User, msg UserMessage) {
-	// skip all messages
+	// Arbitrage
+	if msg.MessageType != UserMessageTypeArbitrage {
+		return
+	}
+
+	userID := msg.Message
+
+	// go away if you already vote
+	if _, ok := u.arbitrageVotes[userID]; ok {
+		return
+	}
+
+	r.users.getUser(userID).arbitrageScore++
+	u.arbitrageVotes[userID] = true
 }
 
 func (r *Room) handleFinishedRoom(u *User, msg UserMessage) {
@@ -132,10 +195,34 @@ func (r *Room) handleFinishedRoom(u *User, msg UserMessage) {
 
 func (r *Room) SendAdminNotify(userID string) error {
 	msg := serverMessage{
-		MessageType: serverMessageTypeNotify,
-		Message:     "ti glavnuy!",
+		MessageType: serverMessageTypeAdminNotify,
+		Message:     len(r.allQuizzes),
 	}
 	return r.users.sendMessageToUser(userID, msg)
+}
+
+func (r *Room) SendEnterNotifyToAll(userID string) error {
+	r.users.mu.RLock()
+	defer r.users.mu.RUnlock()
+
+	msg := serverMessage{
+		MessageType: serverMessageTypeEnterNotify,
+		Message: map[string]interface{}{
+			"count":   len(r.users.container),
+			"user_id": userID,
+		},
+	}
+
+	return r.users.sendMessageForEachUser(msg)
+}
+
+func (r *Room) sendStartGameToAllUsers() error {
+	msg := serverMessage{
+		MessageType: serverMessageTypeStartGame,
+		Message:     len(r.allQuizzes),
+	}
+
+	return r.users.sendMessageForEachUser(msg)
 }
 
 func (r *Room) sendCurrentVideoToAllUsers() error {
@@ -143,9 +230,14 @@ func (r *Room) sendCurrentVideoToAllUsers() error {
 		return errors.New("video index out of bounds")
 	}
 
+	currentQuiz := r.allQuizzes[r.currentQuizID]
+
 	msg := serverMessage{
 		MessageType: serverMessageTypeSendVideo,
-		Message:     r.allQuizzes[r.currentQuizID].videoSource,
+		Message: map[string]interface{}{
+			"video_id": currentQuiz.videoSource,
+			"start":    currentQuiz.start,
+		},
 	}
 
 	r.users.setUsersToBuffered()
@@ -177,19 +269,45 @@ loop:
 				log.Printf("room: send answer: %v", err)
 			}
 
+			// Check answers and send arbitrage
+			for _, u := range r.users.container {
+				if q.isAnswerRight(u.answer) {
+					u.score++
+					u.isAnswerRight = true
+				} else {
+					if len(u.answer) > 0 {
+						srvMessage = serverMessage{
+							MessageType: serverMessageTypeArbitrage,
+							Message: map[string]interface{}{
+								"user_id": u.id,
+								"answer":  u.answer,
+							},
+						}
+
+						err = r.users.sendMessageForEachUserWithoutOne(u.id, srvMessage)
+						if err != nil {
+							log.Printf("room: send an arbitrage: %v", err)
+						}
+					}
+				}
+			}
+
 		case RoomStatePlayShowAnswer:
 			time.Sleep(showAnswerDuration)
 			if r.currentQuizID >= len(r.allQuizzes)-1 { // this quiz is the last one
 				r.RoomState = RoomStateFinished
+				r.users.sendArbitrageApprovedToUsers()
 
 				err := r.users.SendResultsForEachUser()
 				if err != nil {
-					log.Printf("room: send game over: %v", err)
+					log.Printf("room: send result: %v", err)
 				}
 
 			} else {
 				// we have more quizzes to run
 				r.RoomState = RoomStateReadyToPlay
+				r.users.sendArbitrageApprovedToUsers()
+
 				r.currentQuizID++
 				err := r.sendCurrentVideoToAllUsers()
 				if err != nil {
