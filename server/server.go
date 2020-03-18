@@ -34,6 +34,26 @@ func (s *Server) Start(addr string) error {
 		http.ServeFile(w, r, "static/quiz.html")
 	})
 
+	http.HandleFunc("/api/quiz_status", func(w http.ResponseWriter, r *http.Request) {
+		if roomID, ok := r.URL.Query()["room_id"]; ok {
+			room, _ := s.getRoomByID(roomID[0])
+
+			js, err := json.Marshal(map[string]string{
+				"status": quiz.GetRoomStatus(room),
+			})
+
+			if err != nil {
+				log.Printf("server: quiz status: can't marshal response: %v", err)
+				return
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(js)
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	})
+
 	http.Handle("/ws", s.handleWS())
 
 	return http.ListenAndServe(addr, nil)

@@ -16,6 +16,13 @@ const (
 	RoomStateFinished
 )
 
+const (
+	RoomStatusNotExist = "roomNotExist"
+	RoomStatusOpen     = "roomOpen"
+	RoomStatusPlaying  = "roomPlaying"
+	RoomStatusFinished = "roomFinished"
+)
+
 type Room struct {
 	id            string
 	users         *usersMap
@@ -33,6 +40,28 @@ func NewRoom(roomID, adminID string) *Room {
 		RoomState:     RoomStateInit,
 		currentQuizID: 0,
 		allQuizzes:    getShuffledQuizzes(hardcodedQuizzes),
+	}
+}
+
+func GetRoomStatus(r *Room) string {
+	if r != nil {
+		switch r.RoomState {
+		case RoomStateInit:
+			return RoomStatusOpen
+		case RoomStateReadyToPlay:
+			fallthrough
+		case RoomStatePlayVideo:
+			fallthrough
+		case RoomStatePlayShowAnswer:
+			return RoomStatusPlaying
+		case RoomStateFinished:
+			return RoomStatusFinished
+		default:
+			log.Printf("room: get room status: undefined room state: %v", r.RoomState)
+			return ""
+		}
+	} else {
+		return RoomStatusNotExist
 	}
 }
 
